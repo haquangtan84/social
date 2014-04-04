@@ -25,8 +25,9 @@
   def uicomponentId = uicomponent.id;
 %>
 <div class="uiSpaceSettingPortlet" id="$uicomponent.id">
-  <h4><%=_ctx.appRes("${uicomponentId}.label.SpaceConfiguration");%></h4>
+  <h3 class="mgB15"><%=_ctx.appRes("${uicomponentId}.label.SpaceConfiguration");%></h3>
   <% 
   uicomponent.renderChild(UISpaceSetting.class);
   %>
+  <% _ctx.include("classpath:groovy/social/webui/UISocialConfirmation.gtmpl"); %>
 </div>

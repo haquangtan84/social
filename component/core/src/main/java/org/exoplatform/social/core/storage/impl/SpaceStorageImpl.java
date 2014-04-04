@@ -45,7 +45,6 @@ import org.exoplatform.container.PortalContainer;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.social.core.chromattic.entity.IdentityEntity;
-import org.exoplatform.social.core.chromattic.entity.ProfileEntity;
 import org.exoplatform.social.core.chromattic.entity.ProviderEntity;
 import org.exoplatform.social.core.chromattic.entity.SpaceEntity;
 import org.exoplatform.social.core.chromattic.entity.SpaceListEntity;
@@ -63,7 +62,6 @@ import org.exoplatform.social.core.space.model.Space;
 import org.exoplatform.social.core.storage.SpaceStorageException;
 import org.exoplatform.social.core.storage.api.ActivityStreamStorage;
 import org.exoplatform.social.core.storage.api.SpaceStorage;
-import org.exoplatform.social.core.storage.exception.NodeAlreadyExistsException;
 import org.exoplatform.social.core.storage.exception.NodeNotFoundException;
 import org.exoplatform.social.core.storage.query.JCRProperties;
 import org.exoplatform.social.core.storage.query.QueryFunction;
@@ -453,7 +451,6 @@ public class SpaceStorageImpl extends AbstractStorage implements SpaceStorage {
   }
 
   private boolean validateFilter(SpaceFilter filter) {
-
     if (filter == null) {
       return false;
     }
@@ -1439,7 +1436,10 @@ public class SpaceStorageImpl extends AbstractStorage implements SpaceStorage {
    * {@inheritDoc}
    */
   public int getUnifiedSearchSpacesCount(String userId, SpaceFilter spaceFilter) throws SpaceStorageException {
-    return _getUnifiedSearchSpaces(userId, spaceFilter).objects().size();
+    if(validateFilter(spaceFilter)){
+      return _getUnifiedSearchSpaces(userId, spaceFilter).objects().size();
+    }
+    return 0;
   }
 
   
@@ -1489,6 +1489,10 @@ public class SpaceStorageImpl extends AbstractStorage implements SpaceStorage {
   public List<Space> getUnifiedSearchSpaces(String userId, SpaceFilter spaceFilter, long offset, long limit)
                                       throws SpaceStorageException {
     List<Space> spaces = new ArrayList<Space>();
+    
+    if (!validateFilter(spaceFilter)) {
+      return Collections.emptyList();
+    }
 
     //
     QueryResult<SpaceEntity> results = _getUnifiedSearchSpaces(userId, spaceFilter).objects(offset, limit);
@@ -1504,13 +1508,10 @@ public class SpaceStorageImpl extends AbstractStorage implements SpaceStorage {
   }
   
   private Query<SpaceEntity> _getUnifiedSearchSpaces(String userId, SpaceFilter spaceFilter) {
-
     QueryBuilder<SpaceEntity> builder = getSession().createQueryBuilder(SpaceEntity.class);
     WhereExpression whereExpression = new WhereExpression();
 
-    if (validateFilter(spaceFilter)) {
-      _applyUnifiedSearchFilter(whereExpression, spaceFilter);
-    }
+    _applyUnifiedSearchFilter(whereExpression, spaceFilter);
 
     builder.where(whereExpression.toString());
     applyOrder(builder, spaceFilter);
